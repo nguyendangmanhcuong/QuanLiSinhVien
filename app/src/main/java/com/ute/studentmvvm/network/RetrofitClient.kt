@@ -14,4 +14,13 @@ object RetrofitClient {
             level = HttpLoggingInterceptor.Level.BODY
         })
         .build()
+
+    val apiService: StudentApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(StudentApiService::class.java)
+    }
 }

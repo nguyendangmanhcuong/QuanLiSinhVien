@@ -15,3 +15,16 @@ data class Student(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0
 )
+data class Student(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+
+    @ColumnInfo(name = "full_name")
+    val fullName: String,
+
+    @ColumnInfo(name = "student_code")
+    val studentCode: String,
+
+    @ColumnInfo(name = "email")
+    val email: String
+)

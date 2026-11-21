@@ -1,3 +1,4 @@
+
 package com.ute.studentmvvm.ui
 
 import android.os.Bundle
@@ -8,28 +9,21 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ute.studentmvvm.R
-import com.ute.studentmvvm.StudentApp
 import com.ute.studentmvvm.databinding.FragmentStudentListBinding
 import com.ute.studentmvvm.model.Student
 import com.ute.studentmvvm.ui.adapter.StudentAdapter
 import com.ute.studentmvvm.viewmodel.StudentViewModel
-import com.ute.studentmvvm.viewmodel.StudentViewModelFactory
-import kotlinx.coroutines.launch
 
 class StudentListFragment : Fragment() {
 
-    // Backing Property: quản lý an toàn vòng đời ViewBinding của Fragment
+    // Quản lý vòng đời ViewBinding
     private var _binding: FragmentStudentListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: StudentViewModel by activityViewModels {
-        StudentViewModelFactory((requireActivity().application as StudentApp).repository)
-    }
+    // Sử dụng chung ViewModel với Activity
+    private val viewModel: StudentViewModel by activityViewModels()
 
     private lateinit var adapter: StudentAdapter
 
@@ -38,12 +32,17 @@ class StudentListFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentStudentListBinding.inflate(inflater, container, false)
+        _binding = FragmentStudentListBinding.inflate(
+            inflater,
+            container,
+            false
+        )
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         setupRecyclerView()
         observeViewModel()
         setupListeners()
@@ -51,9 +50,14 @@ class StudentListFragment : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = StudentAdapter(
-            onStudentClick = { student -> showStudentDetailDialog(student) },
-            onDeleteClick = { student -> confirmDelete(student) }
+            onStudentClick = { student ->
+                showStudentDetailDialog(student)
+            },
+            onDeleteClick = { student ->
+                confirmDelete(student)
+            }
         )
+
         binding.rvStudents.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@StudentListFragment.adapter
@@ -62,49 +66,77 @@ class StudentListFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        // Quan sát danh sách sinh viên tự động từ Room DB
+
+        // Quan sát danh sách sinh viên từ Room
         viewModel.allStudents.observe(viewLifecycleOwner) { list ->
+
             adapter.submitList(list)
-            binding.layoutEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
-            binding.tvStudentCountBadge.text = "${list.size} sinh viên"
+
+            binding.layoutEmpty.visibility =
+                if (list.isEmpty()) View.VISIBLE else View.GONE
+
+            binding.tvStudentCountBadge.text =
+                "${list.size} sinh viên"
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.message.collect { msg ->
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-                }
+        // Quan sát thông báo từ ViewModel
+        viewModel.statusMessage.observe(viewLifecycleOwner) { msg ->
+
+            if (!msg.isNullOrEmpty()) {
+                Toast.makeText(
+                    requireContext(),
+                    msg,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
     private fun setupListeners() {
+
+        // Nút thêm sinh viên
         binding.fabAdd.setOnClickListener {
-            AddStudentDialogFragment().show(childFragmentManager, "ADD_STUDENT_DIALOG")
+            AddStudentDialogFragment().show(
+                childFragmentManager,
+                "ADD_STUDENT_DIALOG"
+            )
         }
 
+        // Menu trên Toolbar
         binding.toolbar.inflateMenu(R.menu.menu_student_list)
+
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
+
             when (menuItem.itemId) {
+
                 R.id.action_sync -> {
                     viewModel.syncFromCloud()
                     true
                 }
+
                 else -> false
             }
         }
     }
 
+    // Xác nhận xóa sinh viên
     private fun confirmDelete(student: Student) {
+
         AlertDialog.Builder(requireContext())
             .setTitle("Xác Nhận Xóa")
-            .setMessage("Bạn có chắc muốn xóa sinh viên ${student.fullName} khỏi CSDL Room?")
-            .setPositiveButton("Xóa") { _, _ -> viewModel.delete(student) }
+            .setMessage(
+                "Bạn có chắc muốn xóa sinh viên ${student.fullName} khỏi CSDL Room?"
+            )
+            .setPositiveButton("Xóa") { _, _ ->
+                viewModel.delete(student)
+            }
             .setNegativeButton("Hủy", null)
             .show()
     }
 
+    // Hiển thị thông tin chi tiết sinh viên
     private fun showStudentDetailDialog(student: Student) {
+
         AlertDialog.Builder(requireContext())
             .setTitle("Thông Tin Sinh Viên")
             .setMessage(
@@ -122,7 +154,6 @@ class StudentListFragment : Fragment() {
     override fun onDestroyView() {
         binding.rvStudents.adapter = null
         super.onDestroyView()
-        // Bắt buộc giải phóng ViewBinding để chống rò rỉ bộ nhớ
         _binding = null
     }
 }

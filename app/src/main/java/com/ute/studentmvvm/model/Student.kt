@@ -13,10 +13,6 @@ import androidx.room.PrimaryKey
 )
 data class Student(
     @PrimaryKey(autoGenerate = true)
-    val id: Int = 0
-)
-data class Student(
-    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
     @ColumnInfo(name = "full_name")
@@ -26,5 +22,11 @@ data class Student(
     val studentCode: String,
 
     @ColumnInfo(name = "email")
-    val email: String
+    val email: String,
+
+    @ColumnInfo(name = "gpa")
+    val gpa: Double,
+
+    @ColumnInfo(name = "major")
+    val major: String = "Công Nghệ Thông Tin"
 )

@@ -37,4 +37,13 @@ class StudentViewModel(private val repository: StudentRepository) : ViewModel() 
             _message.tryEmit("Lỗi khi xóa: ${e.message}")
         }
     }
+
+    fun syncFromCloud() = viewModelScope.launch(Dispatchers.IO) {
+        val result = repository.syncFromCloud()
+        if (result.isSuccess) {
+            _message.tryEmit("Đã đồng bộ ${result.getOrNull()} sinh viên từ máy chủ!")
+        } else {
+            _message.tryEmit("Chưa thể kết nối máy chủ Cloud, sử dụng dữ liệu cục bộ.")
+        }
+    }
 }
